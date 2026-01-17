@@ -55,16 +55,21 @@ def translate_function(req: func.HttpRequest) -> func.HttpResponse:
 def daily_notifier(myTimer: func.TimerRequest) -> None:
     logging.info('Scheduled task started')
     
-    # Mock call to the translation logic
     # In a real scenario, you might fetch text from a DB or other source
-    mock_text = "こんにちは"
+    text_to_translate = "こんにちは"
     
-    # You can call the translation logic directly.
-    # For a real implementation, ensure environment variables are available.
-    # translated_text_mock = perform_translation(mock_text, os.environ.get('TRANSLATOR_KEY'), os.environ.get('TRANSLATOR_ENDPOINT'), os.environ.get('TRANSLATOR_REGION'))
-    # logging.info(f"Mock translation result: {translated_text_mock}")
+    # Azure AI Translator environment variables
+    translator_key = os.environ.get('TRANSLATOR_KEY')
+    translator_endpoint = os.environ.get('TRANSLATOR_ENDPOINT')
+    translator_region = os.environ.get('TRANSLATOR_REGION')
 
-    logging.info(f"Simulating translation for: '{mock_text}'. In a real scenario, this would be translated.")
+    if not all([translator_key, translator_endpoint, translator_region]):
+        logging.error("Azure AI Translator environment variables are not configured for the daily notifier.")
+        return
+
+    # Call the translation logic directly.
+    translated_text = perform_translation(text_to_translate, translator_key, translator_endpoint, translator_region)
+    logging.info(f"Translation result: {translated_text}")
     
     if myTimer.past_due:
         logging.info('The timer is past due!')
