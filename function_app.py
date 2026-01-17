@@ -3,14 +3,16 @@ import logging
 import os
 import json
 import requests
+from datetime import datetime
+import pytz
 
 app = func.FunctionApp()
 
-# Define a function that can be reused for translation logic
 def perform_translation(text: str, key: str, endpoint: str, region: str) -> str:
-    """Calls the Azure AI Translator API to translate text from Japanese to English."""
+    """Calls the Azure AI Translator API to translate text from English to Japanese."""
     path = '/translate?api-version=3.0'
-    params = '&from=ja&to=en'
+    # Corrected the translation direction from ja->en to en->ja
+    params = '&from=en&to=ja'
     constructed_url = endpoint + path + params
 
     headers = {
@@ -22,18 +24,22 @@ def perform_translation(text: str, key: str, endpoint: str, region: str) -> str:
     body = [{'text': text}]
 
     try:
-        request = requests.post(constructed_url, headers=headers, json=body)
-        request.raise_for_status()  # Raise an exception for bad status codes
-        response = request.json()
-        return response[0]['translations'][0]['text']
+        response = requests.post(constructed_url, headers=headers, json=body)
+        response.raise_for_status()
+        translated_list = response.json()
+        if translated_list and 'translations' in translated_list[0] and translated_list[0]['translations']:
+            return translated_list[0]['translations'][0]['text']
+        else:
+            logging.error(f"Unexpected API response format: {response.text}")
+            return text
     except requests.exceptions.RequestException as e:
         logging.error(f"An error occurred during translation API call: {e}")
-        return "Translation failed."
-    except (KeyError, IndexError) as e:
-        logging.error(f"An error occurred while parsing translation response: {e}")
-        return "Failed to parse translation response."
+        return text
+    except Exception as e:
+        logging.error(f"An unexpected error occurred in perform_translation: {e}")
+        return text
 
-@app.route(route="translate", methods=['GET', 'POST'], auth_level=func.AuthLevel.ANONYMOUS)
+@app.route(route="translate")
 def translate_function(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
@@ -47,12 +53,12 @@ def translate_function(req: func.HttpRequest) -> func.HttpResponse:
             text_to_translate = req_body.get('text')
 
     if text_to_translate:
-        # Re-triggering deployment with a comment.
         translator_key = os.environ.get('TRANSLATOR_KEY')
         translator_endpoint = os.environ.get('TRANSLATOR_ENDPOINT')
         translator_region = os.environ.get('TRANSLATOR_REGION')
 
         if not all([translator_key, translator_endpoint, translator_region]):
+            logging.error("Azure AI Translator environment variables are not configured.")
             return func.HttpResponse(
                 "Azure AI Translator environment variables are not configured.",
                 status_code=500
@@ -64,32 +70,34 @@ def translate_function(req: func.HttpRequest) -> func.HttpResponse:
             translator_endpoint,
             translator_region
         )
-
-        return func.HttpResponse(translated_text)
+        return func.HttpResponse(translated_text, mimetype="text/plain; charset=utf-8")
     else:
         return func.HttpResponse(
-             "Please pass a 'text' on the query string or in the request body to translate.",
+             "Please pass a 'text' on the query string or in the request body",
              status_code=400
         )
 
-# This is the timer-triggered function.
-@app.schedule(schedule="0 30 9 * * 1-5", arg_name="myTimer", run_on_startup=False, use_monitor=False) 
-def daily_translator_job(myTimer: func.TimerRequest) -> None:
+@app.schedule(schedule="0 30 0 * * 1-5", arg_name="myTimer", run_on_startup=False,
+              use_monitor=False) 
+def daily_notifier(myTimer: func.TimerRequest) -> None:
+    utc_timestamp = datetime.utcnow().replace(tzinfo=pytz.utc).isoformat()
+
     if myTimer.past_due:
         logging.info('The timer is past due!')
 
-    logging.info('Python timer trigger function executed.')
+    logging.info('Python timer trigger function ran at %s', utc_timestamp)
     
-    # In a real scenario, you might fetch text from a DB or other source
-    text_to_translate = "こんにちは"
-    
+    # Text to be translated
+    text_to_translate = "Good morning! This is your daily notification."
+
+    # Get environment variables
     translator_key = os.environ.get('TRANSLATOR_KEY')
     translator_endpoint = os.environ.get('TRANSLATOR_ENDPOINT')
     translator_region = os.environ.get('TRANSLATOR_REGION')
-
+    
     if not all([translator_key, translator_endpoint, translator_region]):
         logging.error("Azure AI Translator environment variables are not configured for the daily job.")
         return
-
+    
     translated_text = perform_translation(text_to_translate, translator_key, translator_endpoint, translator_region)
     logging.info(f"Daily translation result: '{text_to_translate}' -> '{translated_text}'")
