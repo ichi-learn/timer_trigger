@@ -1,6 +1,2 @@
 azure-functions
 requests
-charset-normalizer
-idna
-urllib3
-certifi
