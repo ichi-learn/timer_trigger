@@ -7,9 +7,10 @@ import requests
 TRANSLATOR_API_KEY = os.environ.get("TRANSLATOR_API_KEY")
 TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com/"
 
-app = func.FunctionApp()
+app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-@app.route(route="translate", auth_level=func.AuthLevel.ANONYMOUS)
+@app.function_name(name="translate")
+@app.route(route="translate")
 def translate_function(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
