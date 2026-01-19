@@ -3,22 +3,30 @@ import logging
 import os
 import requests
 
-# Get environment variables
+# Define global constants
 TRANSLATOR_API_KEY = os.environ.get("TRANSLATOR_API_KEY")
-TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com/"
+TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com"
 
-app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
+app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-@app.function_name(name="translate")
 @app.route(route="translate")
-def translate_function(req: func.HttpRequest) -> func.HttpResponse:
+def translate(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
     # 1. Get text from query parameter
     text_to_translate = req.params.get('text')
+
+    if not text_to_translate:
+        try:
+            req_body = req.get_json()
+        except ValueError:
+            pass
+        else:
+            text_to_translate = req_body.get('text')
+
     if not text_to_translate:
         return func.HttpResponse(
-             "Please pass a 'text' on the query string.",
+             "Please pass a 'text' on the query string or in the request body",
              status_code=400
         )
 
@@ -42,9 +50,10 @@ def translate_function(req: func.HttpRequest) -> func.HttpResponse:
         'to': 'en'
     }
     body = [{'text': text_to_translate}]
-
+    
     # 4. Call API and return response
     try:
+        # Final attempt
         response = requests.post(TRANSLATOR_ENDPOINT + '/translate', params=params, headers=headers, json=body)
         response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
         
