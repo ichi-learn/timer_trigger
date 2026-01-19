@@ -53,9 +53,8 @@ def translate(req: func.HttpRequest) -> func.HttpResponse:
     
     # 4. Call API and return response
     try:
-        # Final attempt
         response = requests.post(TRANSLATOR_ENDPOINT + '/translate', params=params, headers=headers, json=body)
-        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+        response.raise_for_status()
         
         translation_result = response.json()
         translated_text = translation_result[0]['translations'][0]['text']
