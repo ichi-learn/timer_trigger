@@ -1,4 +1,5 @@
-name: Build and deploy Python project to Azure Function App
+
+name: Deploy Python project to Azure Function App
 
 on:
   push:
@@ -9,31 +10,14 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment: dev
     steps:
-      - name: 'Checkout GitHub Action'
-        uses: actions/checkout@v4
+      - name: Checkout GitHub Action
+        uses: actions/checkout@v2
 
-      - name: Setup Python version
-        uses: actions/setup-python@v1
-        with:
-          python-version: '3.11'
-
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: 'Run Azure Functions Action'
+      - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
         id: fa
         with:
           app-name: 'ichi-translator-rebuilt'
-          slot-name: 'Production'
           package: '.'
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-          scm-do-build-during-deployment: true
-          enable-oryx-build: true
