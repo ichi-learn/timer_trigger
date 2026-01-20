@@ -5,6 +5,7 @@
     pkgs.python311Packages.pip
     pkgs.azure-cli
     pkgs.gh
+    pkgs.zip
   ];
   env = {};
   idx = {
