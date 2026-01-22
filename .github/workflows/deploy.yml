@@ -27,6 +27,6 @@ jobs:
         uses: Azure/functions-action@v1
         with:
           app-name: 'ichi-translator-rebuilt-20240523'
-          package: '.'
+          package: .
           scm-do-build-during-deployment: true
           enable-oryx-build: true
