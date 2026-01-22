@@ -1,7 +1,32 @@
-- name: 'Run Azure Functions Action'
+name: Deploy Python Function App to Azure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Python version'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 'Login to Azure'
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         with:
           app-name: 'ichi-translator-rebuilt-20240523'
-          package: '.' # 現在のディレクトリ（host.jsonがある場所）をそのまま送る
-          # 以下の 1 行を追加してください
-          remote-build: true
+          package: '.'
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
