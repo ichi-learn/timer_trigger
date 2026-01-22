@@ -37,3 +37,5 @@ jobs:
           app-name: 'ichi-translator-rebuilt-20240523'
           # パッケージとしてルート全体を指定
           package: '.'
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
