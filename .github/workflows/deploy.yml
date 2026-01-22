@@ -21,8 +21,8 @@ jobs:
       - name: 'Install dependencies'
         shell: bash
         run: |
-          # 依存関係を専用フォルダにインストール（配置ミスを防ぐ定石）
           python -m pip install --upgrade pip
+          # ここで .python_packages にインストールするのがポイントです
           pip install -r requirements.txt --target=".python_packages"
 
       - name: 'Login to Azure'
@@ -34,14 +34,15 @@ jobs:
         uses: Azure/functions-action@v1
         with:
           app-name: 'ichi-translator-rebuilt-20240523'
-          # 「今いる場所（リポジトリルート）」を指定
+          # 重要：リポジトリルート（.）を指定。
+          # これで「フォルダ」ではなく「中身」が転送対象になります。
           package: .
-          # ここが魔法のスイッチ：Azure側でZip展開と構成をやり直させます
+          # Azure側で「ルート直下への展開」と「ビルド」を強制させるフラグ
           scm-do-build-during-deployment: true
           enable-oryx-build: true
 
-      - name: 'Set Environment Variables via CLI'
-        # 念のため、デプロイのたびに「V2認識フラグ」を強制的に上書き設定します
+      - name: 'Confirm Configuration'
+        # 最後に設定が漏れないよう、CLIで環境変数を自動で再セットします
         run: |
           az functionapp config appsettings set \
             --name ichi-translator-rebuilt-20240523 \
