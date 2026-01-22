@@ -38,5 +38,5 @@ jobs:
         id: deploy-to-function
         uses: Azure/functions-action@v1
         with:
-          app-name: 'ichi-learn-timer-function'
+          app-name: 'ichi-translator-rebuilt-20240523'
           package: './'
