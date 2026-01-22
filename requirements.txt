@@ -1,2 +1,4 @@
 azure-functions
 requests
+azure-ai-translation-text
+azure-core
