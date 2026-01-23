@@ -24,8 +24,17 @@ class TestFunctionApp(unittest.TestCase):
     @patch('function_app.get_translation_client')
     def test_translate_function_success_and_saves_history(self, mock_get_translation_client, mock_get_table_client):
         """正常な翻訳リクエストで、履歴が保存されることをテストする"""
-        # --- 翻訳クライアントのモック設定 ---
-        mock_translation_response = [{'translations': [{'text': 'Hello, world!'}]}]
+        # --- 翻訳クライアントのモック設定 (修正) ---
+        # 実際のAPI応答に近いオブジェクト構造をモックで作成
+        mock_translated_text_obj = MagicMock()
+        mock_translated_text_obj.text = 'Hello, world!'
+
+        mock_translation_item = MagicMock()
+        mock_translation_item.translations = [mock_translated_text_obj]
+
+        mock_translation_response = [mock_translation_item]
+        # --- ここまで修正 ---
+
         mock_translation_instance = MagicMock()
         mock_translation_instance.translate.return_value = mock_translation_response
         mock_get_translation_client.return_value = mock_translation_instance
