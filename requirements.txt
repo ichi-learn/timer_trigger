@@ -2,3 +2,5 @@ azure-functions
 requests
 azure-ai-translation-text
 azure-core
+azure-data-tables
+pytest
