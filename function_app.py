@@ -7,11 +7,13 @@ import time
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.translation.text import TextTranslationClient
 from azure.data.tables import TableClient
+from azure.keyvault.secrets import SecretClient
+from azure.identity import DefaultAzureCredential
 
 app = func.FunctionApp()
 
 # 1. 環境変数の読み込み
-TRANSLATOR_KEY = os.environ.get("TRANSLATOR_KEY")
+VAULT_URL = os.environ.get("VAULT_URL")
 TRANSLATOR_ENDPOINT = os.environ.get("TRANSLATOR_ENDPOINT")
 TRANSLATOR_REGION = os.environ.get("TRANSLATOR_REGION")
 STORAGE_CONNECTION_STRING = os.environ.get("AzureWebJobsStorage")
@@ -22,8 +24,10 @@ PARTITION_KEY = "ja-en"
 
 # 3. クライアントの初期化
 def get_translation_client():
-    credential = AzureKeyCredential(TRANSLATOR_KEY)
-    return TextTranslationClient(endpoint=TRANSLATOR_ENDPOINT, credential=credential, region=TRANSLATOR_REGION)
+    credential = DefaultAzureCredential()
+    secret_client = SecretClient(vault_url=VAULT_URL, credential=credential)
+    translator_key = secret_client.get_secret("translator-key").value
+    return TextTranslationClient(endpoint=TRANSLATOR_ENDPOINT, credential=AzureKeyCredential(translator_key), region=TRANSLATOR_REGION)
 
 def get_table_client():
     return TableClient.from_connection_string(conn_str=STORAGE_CONNECTION_STRING, table_name=TABLE_NAME)

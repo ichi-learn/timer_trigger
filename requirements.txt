@@ -4,3 +4,5 @@ azure-ai-translation-text
 azure-core
 azure-data-tables
 pytest
+azure-keyvault-secrets
+azure-identity
